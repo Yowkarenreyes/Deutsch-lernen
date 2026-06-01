@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deutsch Lernen — A1 to A2 for Filipinos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0f0f0f;
+    --white: #f5f2eb;
+    --cream: #f5f2eb;
+    --ink: #1a1a1a;
+    --muted: #6b6860;
+    --border: rgba(26,26,26,0.12);
+    --a1: #2d6a4f;
+    --a1-light: #d8f3dc;
+    --a2: #9b5110;
+    --a2-light: #fde8cc;
+    --accent: #c84b31;
+    --purple: #4a3f8f;
+    --purple-light: #ede9ff;
+    --card-bg: #ffffff;
+    --page-bg: #f5f2eb;
+    --tag-grammar: #ede9ff;
+    --tag-grammar-text: #3c307a;
+    --tag-vocab: #d8f3dc;
+    --tag-vocab-text: #1b4332;
+    --tag-writing: #fde8cc;
+    --tag-writing-text: #7c3d12;
+    --tag-speaking: #fce4ec;
+    --tag-speaking-text: #880e4f;
+    --tag-review: #e3f2fd;
+    --tag-review-text: #0d47a1;
+    --tag-exam: #f3e5f5;
+    --tag-exam-text: #4a148c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--page-bg);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ---- NOTIFICATION BANNER ---- */
+  #notif-banner {
+    display: none;
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: 14px;
+    padding: 14px 18px;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    animation: slideIn .35s cubic-bezier(.22,1,.36,1);
+  }
+  #notif-banner.show { display: flex; align-items: flex-start; gap: 12px; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-20px) scale(.95); } to { opacity: 1; transform: none; } }
+  .notif-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .notif-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .notif-msg { font-size: 13px; opacity: .8; line-height: 1.4; }
+  .notif-close { margin-left: auto; cursor: pointer; opacity: .5; font-size: 18px; padding-left: 8px; flex-shrink: 0; }
+  .notif-close:hover { opacity: 1; }
+
+  /* ---- SIDEBAR ---- */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: 230px;
+    height: 100vh;
+    background: var(--ink);
+    color: var(--cream);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0 20px;
+    z-index: 100;
+    transition: transform .3s ease;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -.5px;
+    padding: 0 24px 28px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    line-height: 1.2;
+  }
+  .logo span { color: #f4a261; }
+  .logo small { display: block; font-size: 11px; font-weight: 400; opacity: .5; letter-spacing: .5px; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
+  .nav-section { padding: 18px 24px 8px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; opacity: .35; font-weight: 600; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24px;
+    cursor: pointer;
+    font-size: 13.5px;
+    opacity: .6;
+    transition: all .15s;
+    border-left: 3px solid transparent;
+    font-weight: 400;
+  }
+  .nav-item:hover { opacity: .9; background: rgba(255,255,255,.05); }
+  .nav-item.active { opacity: 1; background: rgba(255,255,255,.08); border-left-color: #f4a261; font-weight: 500; }
+  .nav-item .icon { font-size: 16px; width: 18px; text-align: center; }
+  .nav-item .badge-count { margin-left: auto; background: #c84b31; color: white; font-size: 10px; font-weight: 600; border-radius: 10px; padding: 1px 6px; }
+  .sidebar-footer { margin-top: auto; padding: 16px 24px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .progress-mini { margin-bottom: 8px; }
+  .progress-mini-label { display: flex; justify-content: space-between; font-size: 11px; opacity: .5; margin-bottom: 5px; }
+  .progress-mini-bar { height: 3px; background: rgba(255,255,255,.12); border-radius: 2px; }
+  .progress-mini-fill { height: 3px; background: #f4a261; border-radius: 2px; transition: width .4s; }
+
+  /* ---- MAIN CONTENT ---- */
+  #main {
+    margin-left: 230px;
+    min-height: 100vh;
+    padding: 36px 40px;
+    transition: margin .3s;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ---- PAGE HEADER ---- */
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -.5px; line-height: 1.15; }
+  .page-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+  /* ---- STAT CARDS ---- */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .stat-card .s-label { font-size: 11px; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; font-weight: 500; margin-bottom: 6px; }
+  .stat-card .s-value { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
+  .stat-card .s-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* ---- PHASE TABS ---- */
+  .phase-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .phase-tab {
+    padding: 7px 16px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    transition: all .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .phase-tab:hover { border-color: var(--ink); color: var(--ink); }
+  .phase-tab.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+  /* ---- WEEK ACCORDION ---- */
+  .week-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 10px; overflow: hidden; transition: box-shadow .2s; }
+  .week-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+  .week-head {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    gap: 14px;
+    user-select: none;
+  }
+  .week-num { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); min-width: 56px; }
+  .week-info { flex: 1; }
+  .week-title { font-size: 14px; font-weight: 500; }
+  .week-progress-wrap { width: 80px; }
+  .week-prog-bar { height: 4px; background: #ede9e4; border-radius: 2px; }
+  .week-prog-fill { height: 4px; border-radius: 2px; background: var(--a1); transition: width .3s; }
+  .week-prog-label { font-size: 10px; color: var(--muted); margin-top: 3px; text-align: right; }
+  .week-chevron { font-size: 14px; color: var(--muted); transition: transform .2s; flex-shrink: 0; }
+  .week-chevron.open { transform: rotate(180deg); }
+  .week-body { display: none; border-top: 1px solid var(--border); }
+  .week-body.open { display: block; }
+
+  /* ---- DAY ROWS ---- */
+  .day-section { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  .day-section:last-child { border-bottom: none; }
+  .day-label { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; }
+  .task-item input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--a1); cursor: pointer; flex-shrink: 0; }
+  .task-item label { font-size: 13.5px; cursor: pointer; line-height: 1.45; flex: 1; transition: color .2s; }
+  .task-item.done label { text-decoration: line-through; color: var(--muted); }
+  .day-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; letter-spacing: .3px; }
+
+  /* ---- VOCAB FLASHCARDS ---- */
+  .vocab-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .vocab-filter { padding: 6px 14px; border-radius: 30px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .vocab-filter.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .flash-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    cursor: pointer;
+    transition: all .2s;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    perspective: 600px;
+  }
+  .flash-card:hover { border-color: rgba(26,26,26,.25); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); }
+  .flash-card .de { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .flash-card .en { font-size: 12px; color: var(--muted); display: none; }
+  .flash-card .fil { font-size: 12px; color: var(--a1); font-weight: 500; display: none; }
+  .flash-card .cat-badge { font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .flash-card.revealed { background: var(--ink); border-color: var(--ink); }
+  .flash-card.revealed .de { color: var(--cream); }
+  .flash-card.revealed .en, .flash-card.revealed .fil { display: block; }
+  .flash-card.revealed .en { color: rgba(245,242,235,.7); }
+  .flash-card.revealed .fil { color: #81c784; }
+  .flash-card.revealed .cat-badge { color: rgba(245,242,235,.35); }
+
+  /* ---- GRAMMAR ---- */
+  .grammar-section { margin-bottom: 24px; }
+  .grammar-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 12px; }
+  .grammar-card h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  .level-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: .5px; margin-right: 6px; }
+  .lv-a1 { background: var(--a1-light); color: var(--a1); }
+  .lv-a2 { background: var(--a2-light); color: var(--a2); }
+  .grammar-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .grammar-table th { text-align: left; padding: 6px 10px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .grammar-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .grammar-table tr:last-child td { border-bottom: none; }
+  .grammar-table .de { font-weight: 500; }
+  .example-block { background: var(--page-bg); border-left: 3px solid var(--purple); border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 10px 0; font-size: 13px; }
+  .example-block .de { font-weight: 600; margin-bottom: 2px; }
+  .example-block .en { color: var(--muted); font-size: 12px; }
+  .example-block .fil { color: var(--a1); font-size: 12px; font-weight: 500; margin-top: 1px; }
+  .tip-block { background: #d8f3dc; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #1b4332; margin: 10px 0; }
+  .warn-block { background: #fde8cc; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #7c3d12; margin: 10px 0; }
+  .grammar-level-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+
+  /* ---- WRITING ---- */
+  .writing-task { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 14px; }
+  .writing-task h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .task-prompt { font-size: 13px; color: var(--muted); margin-bottom: 12px; font-style: italic; background: var(--page-bg); padding: 8px 12px; border-radius: 8px; }
+  .model-answer { background: var(--page-bg); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; line-height: 1.8; margin-bottom: 10px; }
+  .key-phrases { display: flex; gap: 6px; flex-wrap: wrap; }
+  .phrase { font-size: 11px; background: var(--purple-light); color: var(--purple); padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .writing-practice-area { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; resize: vertical; min-height: 100px; background: var(--card-bg); color: var(--ink); margin-top: 10px; outline: none; transition: border-color .2s; }
+  .writing-practice-area:focus { border-color: var(--purple); }
+
+  /* ---- QUIZ ---- */
+  .quiz-container { max-width: 600px; }
+  .quiz-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .quiz-progress { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .quiz-prog-bar { flex: 1; height: 5px; background: #ede9e4; border-radius: 3px; }
+  .quiz-prog-fill { height: 5px; border-radius: 3px; background: var(--accent); transition: width .3s; }
+  .quiz-prog-text { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .quiz-question { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 20px; line-height: 1.35; }
+  .quiz-opt {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    background: var(--card-bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .quiz-opt:hover:not(:disabled) { border-color: var(--ink); background: var(--page-bg); }
+  .quiz-opt.correct { background: var(--a1-light); border-color: var(--a1); color: var(--a1); font-weight: 500; }
+  .quiz-opt.wrong { background: #fde8e8; border-color: #c84b31; color: #c84b31; }
+  .quiz-next { margin-top: 16px; padding: 12px 24px; background: var(--ink); color: var(--cream); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: none; transition: opacity .15s; }
+  .quiz-next:hover { opacity: .85; }
+  .quiz-result { text-align: center; padding: 20px; }
+  .quiz-score-big { font-family: 'Syne', sans-serif; font-size: 60px; font-weight: 800; line-height: 1; margin-bottom: 8px; }
+  .quiz-result-msg { font-size: 15px; color: var(--muted); margin-bottom: 20px; }
+  .quiz-restart { padding: 12px 28px; background: var(--ink); color: var(--cream); border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+  /* ---- SETTINGS ---- */
+  .settings-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 14px; }
+  .settings-card h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label { font-size: 14px; }
+  .setting-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #d1ccc4; border-radius: 12px; cursor: pointer; transition: background .2s; }
+  .slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform .2s; }
+  input:checked + .slider { background: var(--a1); }
+  input:checked + .slider:before { transform: translateX(18px); }
+  .time-input { border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: var(--card-bg); color: var(--ink); outline: none; transition: border-color .2s; }
+  .time-input:focus { border-color: var(--a1); }
+  .save-btn { width: 100%; padding: 13px; background: var(--ink); color: var(--cream); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: opacity .15s; letter-spacing: .3px; }
+  .save-btn:hover { opacity: .85; }
+  .notif-permission-btn { padding: 10px 18px; background: var(--a1); color: white; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+  /* ---- MOBILE MENU ---- */
+  #menu-toggle { display: none; position: fixed; top: 14px; left: 14px; z-index: 200; background: var(--ink); color: var(--cream); border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 18px; }
+
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; padding: 70px 18px 24px; }
+    #menu-toggle { display: block; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ---- OVERLAY ---- */
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; }
+  #overlay.show { display: block; }
+
+  /* ---- SPEAKING PAGE ---- */
+  .speaking-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 14px; }
+  .speaking-card h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+  .script-box { background: var(--page-bg); border-radius: 10px; padding: 16px; font-size: 14px; line-height: 2; }
+  .script-box strong { color: var(--purple); }
+
+  /* ---- DASHBOARD STREAK ---- */
+  .streak-row { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .streak-day { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--muted); }
+  .streak-day.done { background: var(--a1); border-color: var(--a1); color: white; }
+  .streak-day.today { border-color: var(--accent); color: var(--accent); border-width: 2px; }
+
+  /* ---- TODAY TASKS ---- */
+  .today-task-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; transition: all .15s; }
+  .today-task-item:hover { border-color: rgba(26,26,26,.2); }
+  .today-task-item input[type=checkbox] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--a1); cursor: pointer; flex-shrink: 0; }
+  .today-task-item label { flex: 1; font-size: 14px; cursor: pointer; line-height: 1.45; }
+  .today-task-item.done label { text-decoration: line-through; color: var(--muted); }
+  .today-task-week { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-state .big { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<button id="menu-toggle" onclick="toggleMenu()">☰</button>
+<div id="overlay" onclick="toggleMenu()"></div>
+
+<!-- NOTIFICATION BANNER -->
+<div id="notif-banner">
+  <div class="notif-icon">🇩🇪</div>
+  <div>
+    <div class="notif-title" id="notif-title">Zeit zu lernen!</div>
+    <div class="notif-msg" id="notif-msg">Your German study session is waiting.</div>
+  </div>
+  <div class="notif-close" onclick="closeNotif()">×</div>
+</div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo">Deutsch<span>.</span>PH<small>A1 → A2 for Filipinos</small></div>
+  <div class="nav-section">Study</div>
+  <div class="nav-item active" onclick="gotoPage('dashboard')"><span class="icon">⌂</span> Dashboard</div>
+  <div class="nav-item" onclick="gotoPage('schedule')"><span class="icon">📅</span> Schedule</div>
+  <div class="nav-item" onclick="gotoPage('grammar')"><span class="icon">📐</span> Grammar</div>
+  <div class="nav-item" onclick="gotoPage('vocab')"><span class="icon">🃏</span> Vocabulary</div>
+  <div class="nav-item" onclick="gotoPage('writing')"><span class="icon">✏️</span> Writing</div>
+  <div class="nav-item" onclick="gotoPage('speaking')"><span class="icon">🎤</span> Speaking</div>
+  <div class="nav-item" onclick="gotoPage('quiz')"><span class="icon">🎯</span> Quiz <span class="badge-count" id="quiz-badge">10</span></div>
+  <div class="nav-section">App</div>
+  <div class="nav-item" onclick="gotoPage('settings')"><span class="icon">⚙</span> Settings</div>
+  <div class="sidebar-footer">
+    <div class="progress-mini">
+      <div class="progress-mini-label"><span>Overall progress</span><span id="sidebar-pct">0%</span></div>
+      <div class="progress-mini-bar"><div class="progress-mini-fill" id="sidebar-prog" style="width:0%"></div></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h1 id="dash-greeting">Magandang umaga! 👋</h1>
+      <p>Here's your German study overview for today.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="s-label">Tasks done</div><div class="s-value" id="stat-done">0</div><div class="s-sub">of <span id="stat-total">0</span> total</div></div>
+      <div class="stat-card"><div class="s-label">Progress</div><div class="s-value" id="stat-pct">0%</div><div class="s-sub">Keep going!</div></div>
+      <div class="stat-card"><div class="s-label">Current phase</div><div class="s-value" id="stat-phase">1</div><div class="s-sub" id="stat-phase-name">A1 Foundations</div></div>
+      <div class="stat-card"><div class="s-label">Current week</div><div class="s-value" id="stat-week">1</div><div class="s-sub">of 16 weeks</div></div>
+    </div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:12px">This week's study streak</h2>
+    <div class="streak-row" id="streak-row"></div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:12px">Today's tasks</h2>
+    <div id="today-tasks"></div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="page" id="page-schedule">
+    <div class="page-header">
+      <h1>16-week study schedule</h1>
+      <p>Tick off tasks as you complete them. Your progress saves automatically.</p>
+    </div>
+    <div class="phase-tabs" id="phase-tabs">
+      <button class="phase-tab active" onclick="showPhase(0,this)">Phase 1 — A1 foundations (Wk 1–4)</button>
+      <button class="phase-tab" onclick="showPhase(1,this)">Phase 2 — A1 mastery (Wk 5–8)</button>
+      <button class="phase-tab" onclick="showPhase(2,this)">Phase 3 — A2 launch (Wk 9–12)</button>
+      <button class="phase-tab" onclick="showPhase(3,this)">Phase 4 — A2 exam prep (Wk 13–16)</button>
+    </div>
+    <div id="schedule-weeks"></div>
+  </div>
+
+  <!-- GRAMMAR -->
+  <div class="page" id="page-grammar">
+    <div class="page-header"><h1>Grammar lessons</h1><p>All A1 and A2 grammar with Filipino context clues.</p></div>
+    <div class="grammar-level-tabs">
+      <button class="phase-tab active" onclick="showGrammarLevel('a1',this)">A1 grammar</button>
+      <button class="phase-tab" onclick="showGrammarLevel('a2',this)">A2 grammar</button>
+    </div>
+    <div id="grammar-content"></div>
+  </div>
+
+  <!-- VOCABULARY -->
+  <div class="page" id="page-vocab">
+    <div class="page-header"><h1>Vocabulary flashcards</h1><p>Tap a card to reveal the translation. Your Filipino is your superpower!</p></div>
+    <div class="vocab-filters" id="vocab-filters"></div>
+    <div class="cards-grid" id="vocab-grid"></div>
+  </div>
+
+  <!-- WRITING -->
+  <div class="page" id="page-writing">
+    <div class="page-header"><h1>Writing tasks</h1><p>Practice the Schreiben section. Model answers + your own practice area.</p></div>
+    <div class="grammar-level-tabs">
+      <button class="phase-tab active" onclick="showWritingLevel('a1',this)">A1 tasks</button>
+      <button class="phase-tab" onclick="showWritingLevel('a2',this)">A2 tasks</button>
+    </div>
+    <div id="writing-content"></div>
+  </div>
+
+  <!-- SPEAKING -->
+  <div class="page" id="page-speaking">
+    <div class="page-header"><h1>Speaking practice</h1><p>Scripts and role plays for the Sprechen exam section.</p></div>
+    <div id="speaking-content"></div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="page" id="page-quiz">
+    <div class="page-header"><h1>Practice quiz</h1><p>Test your A1 and A2 knowledge.</p></div>
+    <div class="quiz-container">
+      <div class="quiz-card" id="quiz-card"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="page-header"><h1>Settings</h1><p>Configure your study reminders and preferences.</p></div>
+    <div class="settings-card">
+      <h3>Study reminders</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">Daily reminder</div><div class="setting-sub">Get a notification at your study time</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle-daily" onchange="saveSettings()"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Reminder time</div><div class="setting-sub">What time do you want to study?</div></div>
+        <input type="time" class="time-input" id="study-time" value="19:00" onchange="saveSettings()">
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">In-app pop-ups</div><div class="setting-sub">Show motivational messages while studying</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle-popup" checked onchange="saveSettings()"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Browser notifications</div><div class="setting-sub">Allow notifications even when tab is in background</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle-browser" onchange="requestNotifPermission()"><span class="slider"></span></label>
+      </div>
+      <div id="notif-status" style="font-size:12px;color:var(--muted);padding-top:8px"></div>
+    </div>
+    <div class="settings-card">
+      <h3>Exam target</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">Target exam</div><div class="setting-sub">What are you preparing for?</div></div>
+        <select id="target-exam" class="time-input" onchange="saveSettings()">
+          <option value="both">Both A1 and A2</option>
+          <option value="a1">A1 only</option>
+          <option value="a2">A2 only</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Current week</div><div class="setting-sub">Which week of the schedule are you on?</div></div>
+        <select id="current-week" class="time-input" onchange="saveSettings()">
+          <option value="1">Week 1</option>
+          <option value="2">Week 2</option>
+          <option value="3">Week 3</option>
+          <option value="4">Week 4</option>
+          <option value="5">Week 5</option>
+          <option value="6">Week 6</option>
+          <option value="7">Week 7</option>
+          <option value="8">Week 8</option>
+          <option value="9">Week 9</option>
+          <option value="10">Week 10</option>
+          <option value="11">Week 11</option>
+          <option value="12">Week 12</option>
+          <option value="13">Week 13</option>
+          <option value="14">Week 14</option>
+          <option value="15">Week 15</option>
+          <option value="16">Week 16</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-card">
+      <h3>Data</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">Reset progress</div><div class="setting-sub">Clear all checked tasks and start fresh</div></div>
+        <button onclick="resetProgress()" style="padding:7px 14px;border:1.5px solid #c84b31;border-radius:8px;background:transparent;color:#c84b31;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500">Reset</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
