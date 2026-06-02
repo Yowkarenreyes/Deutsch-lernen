@@ -997,3 +997,549 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ====== PRONUNCIATION ======
+const SOUNDS = [
+  { cat: 'Special German letters', items: [
+    { letter: 'Ä ä', label: 'Long A-umlaut', ipa: '/ɛː/', desc: 'Like the "e" in "bed" but longer', example: 'Mädchen, Käse, schläft', fil: 'Parang "e" sa salitang "bente" — bukas ang bibig', word: 'Mädchen' },
+    { letter: 'Ö ö', label: 'O-umlaut', ipa: '/øː/', desc: 'Round your lips like saying "o", but say "e"', example: 'schön, Öl, hören', fil: 'Bilugin ang labi para sa "o", tapos sabihing "e" — mahirap pero kaya!', word: 'schön' },
+    { letter: 'Ü ü', label: 'U-umlaut', ipa: '/yː/', desc: 'Round your lips like "oo" but say "ee"', example: 'über, grün, müde', fil: 'Bilugin ang labi para sa "u", tapos sabihing "i" — parang maarte!', word: 'über' },
+    { letter: 'ß', label: 'Eszett (sharp S)', ipa: '/s/', desc: 'Just a double "ss" sound — never at start of word', example: 'Straße, heiß, Fuß', fil: 'Katulad lang ng "ss" — walang espesyal na tunog!', word: 'Straße' },
+  ]},
+  { cat: 'Consonants different from English', items: [
+    { letter: 'W', label: 'German W', ipa: '/v/', desc: 'Sounds like English "V" — NOT like English "W"', example: 'Wasser, Welt, wohnen', fil: 'Ang "W" sa German ay "V" sa English! Wasser = "Vasser"', word: 'Wasser' },
+    { letter: 'V', label: 'German V', ipa: '/f/', desc: 'Sounds like English "F" in most words', example: 'Vater, vier, Vogel', fil: 'Ang "V" sa German ay "F" sa English! Vater = "Fater"', word: 'Vater' },
+    { letter: 'Z', label: 'German Z', ipa: '/ts/', desc: 'Like "ts" in "cats" — never like English "Z"', example: 'zehn, Zeit, Zug', fil: 'Ang "Z" sa German ay "ts"! Zehn = "tsen" (sampu)', word: 'zehn' },
+    { letter: 'R', label: 'German R', ipa: '/ʁ/', desc: 'Guttural — made at the back of the throat', example: 'rot, Regen, Bruder', fil: 'Parang banlawan ang lalamunan — "gargling" sound sa likod ng dila', word: 'rot' },
+    { letter: 'CH', label: 'Ich-Laut after e/i', ipa: '/ç/', desc: 'Soft, like whispering "hh" — tongue near roof', example: 'ich, nicht, Mädchen', fil: 'Parang "hy" na banayad — "ich" = "ikh" pero mas malambot', word: 'ich' },
+    { letter: 'CH', label: 'Ach-Laut after a/o/u', ipa: '/x/', desc: 'Harder, guttural — like clearing your throat', example: 'ach, noch, Buch', fil: 'Katulad ng "kh" sa "Khan" — mas malakas at mas malalim', word: 'ach' },
+  ]},
+  { cat: 'Letter combinations', items: [
+    { letter: 'SCH', label: 'SCH', ipa: '/ʃ/', desc: 'Like "sh" in "shop" — always this sound', example: 'Schule, schön, Mensch', fil: 'Parang "sh" sa Ingles na "shop" — madali ito!', word: 'Schule' },
+    { letter: 'SP', label: 'SP at start', ipa: '/ʃp/', desc: 'Sounds like "SHP" at the start of a word', example: 'spielen, Sport, Spaß', fil: 'Ang "SP" sa simula ng salita ay "SHP"! spielen = "shpilen"', word: 'spielen' },
+    { letter: 'ST', label: 'ST at start', ipa: '/ʃt/', desc: 'Sounds like "SHT" at the start of a word', example: 'Stuhl, stehen, Stein', fil: 'Ang "ST" sa simula ay "SHT"! Stuhl = "shtul" (upuan)', word: 'Stuhl' },
+    { letter: 'EI', label: 'EI / AI', ipa: '/aɪ/', desc: 'Like "eye" or "I" in English', example: 'mein, drei, Ei', fil: 'Parang "ay" sa Filipino! mein = "mine" (akin)', word: 'mein' },
+    { letter: 'IE', label: 'IE', ipa: '/iː/', desc: 'Like long "ee" — the I is silent, E is pronounced', example: 'lieben, Bier, viel', fil: 'Parang "i" na mahaba! lieben = "leeben" (mahal)', word: 'lieben' },
+    { letter: 'EU/ÄU', label: 'EU / ÄU', ipa: '/ɔʏ/', desc: 'Like "oy" in "boy"', example: 'heute, neu, Häuser', fil: 'Parang "oi" sa Filipino! heute = "hoyte" (ngayon)', word: 'heute' },
+  ]},
+  { cat: 'Vowel length', items: [
+    { letter: 'A / AA', label: 'Short vs long A', ipa: '/a/ vs /aː/', desc: 'Short: quick "ah". Long: stretched "aah"', example: 'Mann (short) vs Bahn (long)', fil: 'Mahalaga ang haba ng patinig sa German! Nag-iiba ang kahulugan', word: 'Bahn' },
+    { letter: 'E / EE', label: 'Short vs long E', ipa: '/ɛ/ vs /eː/', desc: 'Short: "eh". Long: stretched "ay"', example: 'Bett (short) vs See (long)', fil: 'Bett = higaan (maikling "e"). See = dagat/lawa (mahabang "e")', word: 'See' },
+  ]},
+];
+
+function buildPronunciation() {
+  const container = document.getElementById('pronun-content');
+  if (container.innerHTML.trim()) return;
+  SOUNDS.forEach(section => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'sound-category';
+    catDiv.textContent = section.cat;
+    container.appendChild(catDiv);
+    section.items.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = 'sound-card';
+      card.id = 'sc-' + section.cat.replace(/\s/g,'-') + idx;
+      card.innerHTML = `
+        <div class="sound-letter">${s.letter}</div>
+        <div class="sound-info">
+          <div class="sound-label">${s.label} <span style="font-size:11px;color:var(--muted);font-weight:400">${s.ipa}</span></div>
+          <div class="sound-desc">${s.desc}</div>
+          <div class="sound-ex">e.g. ${s.example}</div>
+          <div class="fil-tip">💡 ${s.fil}</div>
+        </div>
+        <button class="play-btn" onclick="playSound('${s.word}','${card.id}')" title="Hear this sound">▶</button>`;
+      container.appendChild(card);
+    });
+  });
+}
+
+function playSound(word, cardId) {
+  const btn = document.querySelector('#' + cardId + ' .play-btn');
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(word);
+    utt.lang = 'de-DE';
+    utt.rate = 0.8;
+    utt.pitch = 1;
+    if (btn) { btn.classList.add('playing'); btn.textContent = '♪'; }
+    utt.onend = () => { if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; } };
+    utt.onerror = () => { if (btn) { btn.classList.remove('playing'); btn.textContent = '▶'; } };
+    window.speechSynthesis.speak(utt);
+  } else {
+    if (btn) { btn.textContent = '✗'; setTimeout(() => btn.textContent = '▶', 1500); }
+  }
+}
+
+// ====== CHAT PRACTICE ======
+const CHAT_SCENARIOS = [
+  { id: 'intro', icon: '👋', name: 'Introductions', level: 'A1', context: 'You are meeting someone for the first time.',
+    opening: 'Hallo! Ich bin Klaus. Wie heißen Sie?',
+    openingEn: 'Hello! I am Klaus. What is your name?',
+    hints: ['Ich heiße...', 'Ich komme aus...', 'Ich bin ... Jahre alt.', 'Schön, Sie kennenzulernen!'],
+    responses: {
+      name: ['Schöner Name! Woher kommen Sie?', 'Wie interessant! Und woher kommen Sie?'],
+      philippines: ['Oh, von den Philippinen! Toll! Was machen Sie hier?', 'Fantastisch! Sprechen Sie gut Deutsch?'],
+      age: ['Ah, sehr gut! Was sind Sie von Beruf?', 'Interessant! Arbeiten Sie hier?'],
+      default: ['Sehr interessant! Können Sie das auf Deutsch sagen?', 'Gut gemacht! Und was noch?', 'Verstehe! Erzählen Sie mehr.'],
+    }
+  },
+  { id: 'cafe', icon: '☕', name: 'At the café', level: 'A1', context: 'You are ordering at a German café.',
+    opening: 'Guten Morgen! Was darf ich Ihnen bringen?',
+    openingEn: 'Good morning! What can I bring you?',
+    hints: ['Ich möchte einen Kaffee, bitte.', 'Was kostet das?', 'Ein Stück Kuchen, bitte.', 'Die Rechnung, bitte!'],
+    responses: {
+      kaffee: ['Gerne! Möchten Sie Milch und Zucker?', 'Natürlich! Groß oder klein?'],
+      kuchen: ['Welchen Kuchen möchten Sie? Wir haben Schokolade und Apfel.', 'Sehr gut! Zum hier essen oder zum Mitnehmen?'],
+      rechnung: ['Natürlich! Das macht 4 Euro 50, bitte.', 'Einen Moment! Das macht zusammen 6 Euro.'],
+      default: ['Sehr gut! Möchten Sie noch etwas?', 'Natürlich! Darf es sonst noch etwas sein?', 'Alles klar! Einen Moment bitte.'],
+    }
+  },
+  { id: 'doctor', icon: '🏥', name: 'At the doctor', level: 'A2', context: 'You are visiting the doctor because you feel unwell.',
+    opening: 'Guten Tag! Was kann ich für Sie tun? Was fehlt Ihnen?',
+    openingEn: 'Good day! What can I do for you? What is wrong?',
+    hints: ['Ich habe Kopfschmerzen.', 'Mir geht es nicht gut.', 'Ich habe Fieber seit gestern.', 'Ich habe Halsschmerzen.'],
+    responses: {
+      kopf: ['Wie lange haben Sie schon Kopfschmerzen? Haben Sie auch Fieber?', 'Verstehe. Nehmen Sie regelmäßig Tabletten?'],
+      fieber: ['Wie hoch ist das Fieber? Haben Sie es gemessen?', 'Das klingt nicht gut. Seit wann haben Sie Fieber?'],
+      hals: ['Haben Sie auch Husten? Können Sie gut schlucken?', 'Ich schaue mal nach. Bitte öffnen Sie den Mund.'],
+      default: ['Können Sie das genauer beschreiben?', 'Seit wann haben Sie diese Beschwerden?', 'Ich verstehe. Nehmen Sie Medikamente?'],
+    }
+  },
+  { id: 'directions', icon: '🗺️', name: 'Asking directions', level: 'A2', context: 'You are lost and need to find the train station.',
+    opening: 'Entschuldigung, kann ich Ihnen helfen? Sie sehen etwas verloren aus!',
+    openingEn: 'Excuse me, can I help you? You look a little lost!',
+    hints: ['Wo ist der Bahnhof?', 'Wie komme ich zur U-Bahn?', 'Ist es weit von hier?', 'Danke sehr!'],
+    responses: {
+      bahnhof: ['Kein Problem! Gehen Sie geradeaus, dann links. Der Bahnhof ist 5 Minuten zu Fuß.', 'Der Bahnhof? Fahren Sie mit der U-Bahn — Linie 3, zwei Stationen.'],
+      ubahn: ['Die U-Bahn-Station ist gleich um die Ecke. Gehen Sie rechts.', 'Die nächste U-Bahn ist auf der linken Seite, etwa 200 Meter.'],
+      weit: ['Nein, nicht weit! Ungefähr 10 Minuten zu Fuß.', 'Es ist nicht sehr weit — ungefähr 500 Meter.'],
+      default: ['Ich helfe Ihnen gern! Was genau suchen Sie?', 'Kein Problem! Wo möchten Sie hin?', 'Natürlich! Ich kenne die Gegend gut.'],
+    }
+  },
+  { id: 'shopping', icon: '🛍️', name: 'Shopping', level: 'A2', context: 'You are shopping for clothes in a store.',
+    opening: 'Willkommen! Kann ich Ihnen helfen? Suchen Sie etwas Bestimmtes?',
+    openingEn: 'Welcome! Can I help you? Are you looking for something specific?',
+    hints: ['Ich suche ein T-Shirt.', 'Haben Sie das in Größe M?', 'Was kostet das?', 'Kann ich das anprobieren?'],
+    responses: {
+      tshirt: ['Natürlich! Welche Größe brauchen Sie? Und welche Farbe?', 'Wir haben viele T-Shirts! Schauen Sie hier — was gefällt Ihnen?'],
+      groesse: ['Einen Moment, ich schaue nach. Wir haben S, M und L auf Lager.', 'Ja, Größe M haben wir noch. Soll ich es holen?'],
+      kosten: ['Das kostet 29 Euro 99. Heute haben wir 20% Rabatt!', 'Der normale Preis ist 35 Euro, aber heute ist es im Angebot für 25 Euro.'],
+      default: ['Sehr gute Wahl! Das steht Ihnen sicher gut.', 'Natürlich! Die Umkleidekabinen sind dort drüben.', 'Gerne helfe ich Ihnen!'],
+    }
+  },
+];
+
+let activeChatScenario = null;
+let chatHistory = [];
+
+function buildChat() {
+  const container = document.getElementById('chat-scenarios');
+  if (container.innerHTML.trim()) return;
+  CHAT_SCENARIOS.forEach(sc => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-scenario-btn';
+    btn.id = 'sc-btn-' + sc.id;
+    btn.innerHTML = `<span class="sc-icon">${sc.icon}</span><span class="sc-name">${sc.name}</span><br><span class="sc-level">${sc.level} · ${sc.context}</span>`;
+    btn.onclick = () => startScenario(sc);
+    container.appendChild(btn);
+  });
+}
+
+function startScenario(sc) {
+  activeChatScenario = sc;
+  chatHistory = [];
+  document.querySelectorAll('.chat-scenario-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sc-btn-' + sc.id).classList.add('active');
+  document.getElementById('ch-icon').textContent = sc.icon;
+  document.getElementById('ch-title').textContent = sc.name;
+  document.getElementById('ch-sub').textContent = sc.context;
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '';
+  addMsg('bot', `<strong>${sc.opening}</strong><br><small style="color:var(--muted)">${sc.openingEn}</small>`);
+  addMsg('hint', '💡 Tip: Type in German! Use the hints below if you need help.');
+  chatHistory.push({ role: 'tutor', text: sc.opening });
+  const hintsEl = document.getElementById('chat-hints');
+  hintsEl.innerHTML = sc.hints.map(h => `<span class="hint-chip" onclick="useHint('${h}')">${h}</span>`).join('');
+}
+
+function useHint(text) {
+  document.getElementById('chat-input').value = text;
+  document.getElementById('chat-input').focus();
+}
+
+function addMsg(type, html) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || !activeChatScenario) return;
+  input.value = '';
+  addMsg('user', text);
+  chatHistory.push({ role: 'user', text });
+  // Show typing indicator
+  const typing = addMsg('bot', '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>');
+  setTimeout(() => {
+    typing.remove();
+    const response = generateChatResponse(text, activeChatScenario);
+    addMsg('bot', `<strong>${response.de}</strong><br><small style="color:var(--muted)">${response.en}</small>`);
+    // Give language feedback
+    const feedback = getFeedback(text);
+    if (feedback) addMsg(feedback.type, feedback.msg);
+  }, 800 + Math.random() * 600);
+}
+
+function generateChatResponse(userText, sc) {
+  const lower = userText.toLowerCase();
+  const resp = sc.responses;
+  let matched = null;
+  if (lower.includes('kopf') || lower.includes('schmerz')) matched = resp.kopf;
+  else if (lower.includes('fieber')) matched = resp.fieber;
+  else if (lower.includes('hals')) matched = resp.hals;
+  else if (lower.includes('bahnhof')) matched = resp.bahnhof;
+  else if (lower.includes('u-bahn') || lower.includes('ubahn')) matched = resp.ubahn;
+  else if (lower.includes('weit')) matched = resp.weit;
+  else if (lower.includes('heiß') || lower.includes('heis') || lower.includes('name') || lower.includes('ich bin') || lower.includes('ich heiße')) matched = resp.name;
+  else if (lower.includes('philippinen') || lower.includes('manila') || lower.includes('quezon') || lower.includes('pilipinas')) matched = resp.philippines;
+  else if (lower.includes('jahre') || lower.includes('alt')) matched = resp.age;
+  else if (lower.includes('kaffee') || lower.includes('tee')) matched = resp.kaffee;
+  else if (lower.includes('kuchen') || lower.includes('essen')) matched = resp.kuchen;
+  else if (lower.includes('rechnung') || lower.includes('bezahl')) matched = resp.rechnung;
+  else if (lower.includes('t-shirt') || lower.includes('shirt') || lower.includes('kleid') || lower.includes('suche')) matched = resp.tshirt;
+  else if (lower.includes('größe') || lower.includes('gross') || lower.includes('size')) matched = resp.groesse;
+  else if (lower.includes('kostet') || lower.includes('preis') || lower.includes('euro')) matched = resp.kosten;
+  const pool = matched || resp.default;
+  const text = pool[Math.floor(Math.random() * pool.length)];
+  const translations = {
+    'Schöner Name! Woher kommen Sie?': 'Nice name! Where are you from?',
+    'Sehr interessant! Können Sie das auf Deutsch sagen?': 'Very interesting! Can you say that in German?',
+    'Gut gemacht! Und was noch?': 'Well done! What else?',
+    'Gerne! Möchten Sie Milch und Zucker?': 'Of course! Would you like milk and sugar?',
+    'Natürlich! Das macht 4 Euro 50, bitte.': 'Of course! That will be 4 Euros 50, please.',
+    'Wie lange haben Sie schon Kopfschmerzen? Haben Sie auch Fieber?': 'How long have you had a headache? Do you also have a fever?',
+    'Kein Problem! Gehen Sie geradeaus, dann links. Der Bahnhof ist 5 Minuten zu Fuß.': 'No problem! Go straight ahead, then left. The station is 5 minutes on foot.',
+    'Natürlich! Welche Größe brauchen Sie? Und welche Farbe?': 'Of course! What size do you need? And what colour?',
+  };
+  return { de: text, en: translations[text] || 'Great! Keep going in German!' };
+}
+
+function getFeedback(text) {
+  const lower = text.toLowerCase();
+  if (lower.length < 3) return null;
+  if (/^[a-z\s]+$/i.test(text) && !text.includes('ich') && !text.includes('ein') && text.split(' ').length > 2) {
+    return { type: 'feedback-warn', msg: '💬 Tipp: Try to answer in German! It\'s okay to make mistakes.' };
+  }
+  if (text.includes('ich') || text.includes('Ich') || text.includes('bin') || text.includes('habe') || text.includes('möchte')) {
+    return { type: 'feedback-good', msg: '✓ Gut gemacht! Good German sentence structure!' };
+  }
+  if (text.includes('bitte') || text.includes('danke') || text.includes('Entschuldigung')) {
+    return { type: 'feedback-good', msg: '✓ Sehr höflich! Very polite German!' };
+  }
+  return null;
+}
+
+// ====== EXERCISES ======
+const EXERCISES = {
+  a1: [
+    {
+      type: 'fill',
+      title: 'Articles — der, die, das',
+      prompt: 'Fill in the correct article (der, die, or das) for each noun.',
+      items: [
+        { sentence: '___ Mann kommt aus Deutschland.', answer: 'Der', hint: 'Mann is masculine' },
+        { sentence: '___ Frau heißt Maria.', answer: 'Die', hint: 'Frau is feminine' },
+        { sentence: '___ Kind spielt im Park.', answer: 'Das', hint: 'Kind is neuter' },
+        { sentence: '___ Buch ist sehr interessant.', answer: 'Das', hint: 'Buch is neuter' },
+        { sentence: '___ Schule ist groß.', answer: 'Die', hint: 'Schule is feminine' },
+      ]
+    },
+    {
+      type: 'fill',
+      title: 'Verb conjugation — sein',
+      prompt: 'Fill in the correct form of "sein" (to be).',
+      items: [
+        { sentence: 'Ich ___ Filipino.', answer: 'bin', hint: 'Ich → bin' },
+        { sentence: 'Du ___ sehr nett.', answer: 'bist', hint: 'Du → bist' },
+        { sentence: 'Er ___ 25 Jahre alt.', answer: 'ist', hint: 'Er → ist' },
+        { sentence: 'Wir ___ Studenten.', answer: 'sind', hint: 'Wir → sind' },
+        { sentence: 'Sie ___ aus den Philippinen.', answer: 'kommen', hint: 'Wait — this needs kommen not sein!' },
+      ]
+    },
+    {
+      type: 'reorder',
+      title: 'Word order — verb in position 2',
+      prompt: 'Put the words in the correct order. Remember: verb is always position 2!',
+      items: [
+        { words: ['komme', 'Ich', 'Philippinen', 'aus', 'den'], answer: 'Ich komme aus den Philippinen', hint: 'Subject + Verb + rest' },
+        { words: ['Kaffee', 'gern', 'trinkt', 'Er'], answer: 'Er trinkt gern Kaffee', hint: 'Er = subject, trinkt = verb' },
+        { words: ['Jahre', 'bin', 'alt', 'Ich', '24'], answer: 'Ich bin 24 Jahre alt', hint: 'bin goes to position 2' },
+      ]
+    },
+  ],
+  a2: [
+    {
+      type: 'fill',
+      title: 'Perfekt — haben or sein?',
+      prompt: 'Choose haben or sein to form the correct Perfekt tense.',
+      items: [
+        { sentence: 'Ich ___ gestern ins Kino gegangen.', answer: 'bin', hint: 'gehen = movement → sein' },
+        { sentence: 'Sie ___ das Buch gelesen.', answer: 'hat', hint: 'lesen = not movement → haben' },
+        { sentence: 'Wir ___ nach Berlin gefahren.', answer: 'sind', hint: 'fahren = movement → sein' },
+        { sentence: 'Er ___ Adobo gegessen.', answer: 'hat', hint: 'essen = not movement → haben' },
+        { sentence: 'Ich ___ früh aufgestanden.', answer: 'bin', hint: 'aufstehen = change of state → sein' },
+      ]
+    },
+    {
+      type: 'fill',
+      title: 'Modal verbs',
+      prompt: 'Fill in the correct modal verb: kann, muss, will, darf, soll.',
+      items: [
+        { sentence: 'Ich ___ morgen früh arbeiten. (I have to)', answer: 'muss', hint: 'have to = müssen → muss' },
+        { sentence: 'Sie ___ sehr gut Deutsch sprechen. (She can)', answer: 'kann', hint: 'can = können → kann' },
+        { sentence: 'Er ___ nach Deutschland fliegen. (He wants to)', answer: 'will', hint: 'want to = wollen → will' },
+        { sentence: 'Du ___ hier nicht rauchen. (You are not allowed)', answer: 'darfst', hint: 'may/allowed = dürfen → darfst' },
+      ]
+    },
+    {
+      type: 'fill',
+      title: 'Dative prepositions',
+      prompt: 'Fill in the correct dative article after the preposition.',
+      items: [
+        { sentence: 'Ich fahre mit ___ Zug. (der Zug)', answer: 'dem', hint: 'der → dem in dative' },
+        { sentence: 'Sie kommt aus ___ Schule. (die Schule)', answer: 'der', hint: 'die → der in dative' },
+        { sentence: 'Ich wohne bei ___ Freund. (der Freund)', answer: 'dem', hint: 'der → dem in dative' },
+        { sentence: 'Wir gehen zu ___ Arzt. (der Arzt)', answer: 'dem', hint: 'der → dem in dative' },
+      ]
+    },
+  ]
+};
+
+let activeExLevel = 'a1';
+
+function buildExercises() {
+  renderExercises('a1');
+}
+
+function showExLevel(level, btn) {
+  activeExLevel = level;
+  document.querySelectorAll('#page-exercises .phase-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderExercises(level);
+}
+
+function renderExercises(level) {
+  const container = document.getElementById('exercises-content');
+  container.innerHTML = '';
+  EXERCISES[level].forEach((ex, ei) => {
+    const card = document.createElement('div');
+    card.className = 'exercise-card';
+    const badge = level === 'a1' ? '<span style="background:#d8f3dc;color:#2d6a4f;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;margin-right:6px">A1</span>' : '<span style="background:#fde8cc;color:#9b5110;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;margin-right:6px">A2</span>';
+    if (ex.type === 'fill') {
+      card.innerHTML = `<h3>${badge}${ex.title}</h3><p class="ex-prompt">${ex.prompt}</p>
+        <div class="fill-blank" id="ex-fill-${level}-${ei}">
+          ${ex.items.map((item, ii) => `<div style="margin-bottom:10px">${item.sentence.replace('___', `<input class="blank-input" id="inp-${level}-${ei}-${ii}" placeholder="???" autocomplete="off">`)}<small style="font-size:11px;color:var(--muted);margin-left:8px" id="hint-${level}-${ei}-${ii}"></small></div>`).join('')}
+        </div>
+        <button class="ex-check-btn" onclick="checkFill('${level}',${ei})">Check answers ✓</button>
+        <div class="ex-result" id="ex-res-${level}-${ei}"></div>`;
+    } else if (ex.type === 'reorder') {
+      card.innerHTML = `<h3>${badge}${ex.title}</h3><p class="ex-prompt">${ex.prompt}</p><div id="ex-reorder-${level}-${ei}"></div>
+        <button class="ex-check-btn" onclick="checkReorder('${level}',${ei})">Check answers ✓</button>
+        <div class="ex-result" id="ex-res-${level}-${ei}"></div>`;
+      setTimeout(() => buildReorder(level, ei, ex), 0);
+    }
+    container.appendChild(card);
+  });
+}
+
+function buildReorder(level, ei, ex) {
+  const container = document.getElementById(`ex-reorder-${level}-${ei}`);
+  if (!container) return;
+  ex.items.forEach((item, ii) => {
+    const div = document.createElement('div');
+    div.style.marginBottom = '16px';
+    const shuffled = [...item.words].sort(() => Math.random() - 0.5);
+    div.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Sentence ${ii+1}: Rearrange these words</div>
+      <div class="reorder-words" id="words-${level}-${ei}-${ii}">
+        ${shuffled.map(w => `<span class="word-chip" onclick="selectWord(this,'${level}',${ei},${ii})">${w}</span>`).join('')}
+      </div>
+      <div class="answer-slots" id="slots-${level}-${ei}-${ii}" onclick="removeLastWord('${level}',${ei},${ii})"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Click words to build the sentence. Click the answer area to remove the last word.</div>`;
+    container.appendChild(div);
+  });
+}
+
+function selectWord(el, level, ei, ii) {
+  if (el.classList.contains('selected')) return;
+  el.classList.add('selected');
+  const slots = document.getElementById(`slots-${level}-${ei}-${ii}`);
+  const slot = document.createElement('span');
+  slot.className = 'answer-slot';
+  slot.textContent = el.textContent;
+  slot.dataset.word = el.textContent;
+  slots.appendChild(slot);
+}
+
+function removeLastWord(level, ei, ii) {
+  const slots = document.getElementById(`slots-${level}-${ei}-${ii}`);
+  const last = slots.lastElementChild;
+  if (!last) return;
+  const word = last.dataset.word;
+  last.remove();
+  const chips = document.querySelectorAll(`#words-${level}-${ei}-${ii} .word-chip`);
+  chips.forEach(c => { if (c.textContent === word && c.classList.contains('selected')) c.classList.remove('selected'); });
+}
+
+function checkFill(level, ei) {
+  const ex = EXERCISES[level][ei];
+  let correct = 0;
+  ex.items.forEach((item, ii) => {
+    const inp = document.getElementById(`inp-${level}-${ei}-${ii}`);
+    const hintEl = document.getElementById(`hint-${level}-${ei}-${ii}`);
+    if (!inp) return;
+    const val = inp.value.trim().toLowerCase();
+    const ans = item.answer.toLowerCase();
+    if (val === ans) {
+      inp.classList.add('correct'); inp.classList.remove('wrong');
+      if (hintEl) hintEl.textContent = '✓ Richtig!';
+      correct++;
+    } else {
+      inp.classList.add('wrong'); inp.classList.remove('correct');
+      if (hintEl) hintEl.textContent = `✗ → ${item.answer} (${item.hint})`;
+    }
+  });
+  const res = document.getElementById(`ex-res-${level}-${ei}`);
+  res.classList.add('show');
+  if (correct === ex.items.length) {
+    res.className = 'ex-result show pass';
+    res.textContent = `✓ Perfekt! ${correct}/${ex.items.length} correct! Sehr gut! 🎉`;
+  } else {
+    res.className = 'ex-result show fail';
+    res.textContent = `${correct}/${ex.items.length} correct. Review the red answers — try again! Kaya mo!`;
+  }
+}
+
+function checkReorder(level, ei) {
+  const ex = EXERCISES[level][ei];
+  let correct = 0;
+  ex.items.forEach((item, ii) => {
+    const slots = document.getElementById(`slots-${level}-${ei}-${ii}`);
+    if (!slots) return;
+    const answer = Array.from(slots.children).map(s => s.dataset.word).join(' ');
+    if (answer === item.answer) correct++;
+    else {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-size:12px;color:#9b5110;margin-top:4px';
+      hint.textContent = `✗ Correct: "${item.answer}"`;
+      slots.parentNode.appendChild(hint);
+    }
+  });
+  const res = document.getElementById(`ex-res-${level}-${ei}`);
+  res.classList.add('show');
+  if (correct === ex.items.length) {
+    res.className = 'ex-result show pass';
+    res.textContent = `✓ Perfekt! All ${correct} sentences correct! Ausgezeichnet! 🎉`;
+  } else {
+    res.className = 'ex-result show fail';
+    res.textContent = `${correct}/${ex.items.length} correct. Check the corrections above!`;
+  }
+}
+
+// ====== CULTURE ======
+const CULTURE_DATA = [
+  {
+    emoji: '⏰', title: 'Punctuality — Pünktlichkeit', sub: 'The German golden rule',
+    body: `In Germany, being <strong>on time means arriving 5 minutes early</strong>. Being late by even 10 minutes without notice is considered rude and unprofessional. This applies to work meetings, social events, doctor appointments, and even dinner invitations.`,
+    tip: '🇩🇪 German saying: "Pünktlichkeit ist die Höflichkeit der Könige." (Punctuality is the politeness of kings.)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: 'Filipino time (FT) = arrive 30–60 minutes late. "Bukas" means tomorrow or sometime soon! Social events often start 1–2 hours after the stated time.' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'German time = arrive 5 minutes early. If you say 7pm, you mean 7pm exactly. Being late is a sign of disrespect.' },
+  },
+  {
+    emoji: '🤝', title: 'Formality & greetings — Sie vs Du', sub: 'Two levels of respect',
+    body: `German has two ways to say "you": <strong>Sie</strong> (formal) and <strong>du</strong> (informal). Always use <strong>Sie</strong> with strangers, older people, bosses, doctors, and anyone you meet in a professional setting. Only switch to <strong>du</strong> when invited to.`,
+    tip: '💡 If a German switches from Sie to du, it\'s a sign they like and trust you — it\'s a big deal! They might say: "Wollen wir uns duzen?" (Shall we use du with each other?)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: '"Po" and "Opo" show respect. You use them with elders and strangers automatically — similar to how Germans use "Sie".' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'Sie = formal, strangers, professionals. Du = friends, family, children, close colleagues. Getting it wrong is very noticeable.' },
+  },
+  {
+    emoji: '🛒', title: 'Shopping culture — Sundays are closed!', sub: 'Ladenschluss',
+    body: `In Germany, <strong>almost all shops are closed on Sundays</strong> by law. This is called <em>Ladenschluss</em>. Germans plan their grocery shopping on Saturday. Bakeries may open briefly on Sunday morning, but supermarkets, hardware stores, and clothing stores stay closed.`,
+    tip: '🛍️ Vocabulary: der Supermarkt (supermarket) · geöffnet (open) · geschlossen (closed) · die Öffnungszeiten (opening hours)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: 'SM malls, groceries and shops are open 7 days a week including Sundays and holidays — sometimes 24 hours!' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'Shops close on Sunday by federal law. Most close at 8pm on weekdays. Plan ahead — you cannot do emergency grocery runs on Sunday!' },
+  },
+  {
+    emoji: '🍺', title: 'Food & drink culture — Brotzeit and Stammtisch', sub: 'Social rituals around eating',
+    body: `Germans take food seriously. <strong>Brotzeit</strong> (bread time) is a traditional snack of bread, cold cuts and cheese. The <strong>Stammtisch</strong> is a regular table at a pub reserved for a group of regulars — a deep social tradition. When eating together, Germans say <strong>Guten Appetit!</strong> before the meal.`,
+    tip: '🥨 Essential phrases: Guten Appetit! (Enjoy your meal!) · Prost! (Cheers!) · Zum Wohl! (To your health!) · Das schmeckt gut! (This tastes good!)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: '"Kain tayo!" (Let\'s eat!) is the Filipino way. Food is always shared, family-style. Mano po before eating shows respect to elders.' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'Wait for everyone to be served before eating. Say "Guten Appetit" first. Splitting the bill (each person pays their own) is completely normal — called "getrennt bezahlen".' },
+  },
+  {
+    emoji: '♻️', title: 'Recycling — Mülltrennung', sub: 'Germans are very serious about this',
+    body: `Germany has one of the world\'s most advanced recycling systems. <strong>Every household separates waste</strong> into different coloured bins: yellow (packaging), blue (paper), brown (organic), grey/black (general waste). There is also the <strong>Pfand</strong> system — you pay a deposit on bottles and get money back when you return them.`,
+    tip: '🗑️ Vocabulary: der Müll (rubbish) · die Mülltrennung (waste separation) · das Pfand (deposit) · der Gelbe Sack (yellow bag for packaging)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: 'The Philippines has the Ecological Solid Waste Management Act but enforcement varies widely. Segregation into biodegradable and non-biodegradable is required.' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'Mülltrennung is taken very seriously. Neighbors may confront you for putting the wrong item in the wrong bin. Pfand: plastic bottles = 25 cents deposit per bottle.' },
+  },
+  {
+    emoji: '🎄', title: 'Holidays & traditions — Feiertage', sub: 'Festivals that every German learner should know',
+    body: `Germany\'s most famous celebration is <strong>Weihnachten</strong> (Christmas), centred around 24 December (Heiligabend). <strong>Oktoberfest</strong> in Munich is the world\'s largest folk festival. <strong>Karneval/Fasching</strong> is a pre-Lent festival of costumes and parties, especially in Cologne and Munich.`,
+    tip: '🎉 Key dates: Weihnachten = December 24–26 · Silvester = New Year\'s Eve · Ostern = Easter · Tag der Deutschen Einheit = October 3 (German Unity Day)',
+    ph: { flag: '🇵🇭', label: 'Philippines', text: 'Christmas in the Philippines starts in September — the world\'s longest Christmas season! Simbang Gabi (9 nights of dawn Mass) is a unique Filipino tradition.' },
+    de: { flag: '🇩🇪', label: 'Germany', text: 'Christmas is very family-focused and quiet. No loud parties on December 24. The Weihnachtsmarkt (Christmas market) is magical — mulled wine (Glühwein) and gingerbread everywhere!' },
+  },
+];
+
+function buildCulture() {
+  const container = document.getElementById('culture-content');
+  if (container.innerHTML.trim()) return;
+  CULTURE_DATA.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'culture-card';
+    card.innerHTML = `
+      <div class="cc-header">
+        <div class="cc-emoji">${item.emoji}</div>
+        <div><div class="cc-title">${item.title}</div><div class="cc-sub">${item.sub}</div></div>
+      </div>
+      <div class="cc-body">
+        <p>${item.body}</p>
+        <div class="culture-compare">
+          <div class="cc-col ph"><div class="cc-flag">${item.ph.flag}</div><div class="cc-clabel">${item.ph.label}</div><div>${item.ph.text}</div></div>
+          <div class="cc-col de"><div class="cc-flag">${item.de.flag}</div><div class="cc-clabel">${item.de.label}</div><div>${item.de.text}</div></div>
+        </div>
+        <div class="culture-tip">${item.tip}</div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+// ====== UPDATED gotoPage to handle new pages ======
+const _origGotoPage = gotoPage;
+gotoPage = function(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + id);
+  if (pageEl) pageEl.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    if ((id === 'dashboard' && text.includes('dashboard')) ||
+        (id !== 'dashboard' && text.includes(id.toLowerCase()))) {
+      item.classList.add('active');
+    }
+  });
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'settings') applySettingsUI();
+  if (id === 'pronunciation') buildPronunciation();
+  if (id === 'chat') buildChat();
+  if (id === 'exercises') buildExercises();
+  if (id === 'culture') buildCulture();
+  closeSidebar();
+};
