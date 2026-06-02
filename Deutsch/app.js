@@ -1543,3 +1543,295 @@ gotoPage = function(id) {
   if (id === 'culture') buildCulture();
   closeSidebar();
 };
+
+// ====== GLOBAL SPEAK ENGINE ======
+
+function speak(text, btnEl) {
+  if (!('speechSynthesis' in window)) {
+    if (btnEl) { btnEl.textContent = '✗'; setTimeout(() => btnEl.textContent = '🔊', 1500); }
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'de-DE';
+  utt.rate = 0.82;
+  utt.pitch = 1;
+  if (btnEl) {
+    btnEl.classList.add('speaking');
+    btnEl.textContent = '♪';
+    utt.onend = () => { btnEl.classList.remove('speaking'); btnEl.textContent = '🔊'; };
+    utt.onerror = () => { btnEl.classList.remove('speaking'); btnEl.textContent = '🔊'; };
+  }
+  window.speechSynthesis.speak(utt);
+}
+
+function mkSpeak(text, size) {
+  size = size || '13px';
+  const safe = text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return `<button class="spk-btn" style="font-size:${size}" onclick="event.stopPropagation();speak('${safe}',this)" title="Hear in German">🔊</button>`;
+}
+
+// Inject global speak button style once
+(function injectSpeakStyle() {
+  if (document.getElementById('spk-style')) return;
+  const s = document.createElement('style');
+  s.id = 'spk-style';
+  s.textContent = `
+    .spk-btn {
+      background: none; border: 1px solid rgba(26,26,26,0.15); border-radius: 20px;
+      padding: 2px 7px; cursor: pointer; font-size: 12px; margin-left: 6px;
+      vertical-align: middle; transition: all .15s; color: #2d6a4f; line-height: 1.4;
+    }
+    .spk-btn:hover { background: #d8f3dc; border-color: #2d6a4f; }
+    .spk-btn.speaking { background: #2d6a4f; color: white; border-color: #2d6a4f; }
+    .spk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .spk-sentence { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .listen-all-btn {
+      padding: 7px 16px; background: #1a1a1a; color: #f5f2eb; border: none;
+      border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer;
+      margin-bottom: 12px; transition: opacity .15s; font-family: 'DM Sans', sans-serif;
+    }
+    .listen-all-btn:hover { opacity: .85; }
+    .chat-speak-btn {
+      background: none; border: none; font-size: 15px; cursor: pointer;
+      padding: 2px 4px; opacity: .6; transition: opacity .15s;
+    }
+    .chat-speak-btn:hover { opacity: 1; }
+    .mic-btn {
+      background: none; border: 1.5px solid rgba(26,26,26,0.15); border-radius: 50%;
+      width: 38px; height: 38px; font-size: 16px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; transition: all .2s;
+    }
+    .mic-btn:hover { background: #d8f3dc; border-color: #2d6a4f; }
+    .mic-btn.listening { background: #c84b31; color: white; border-color: #c84b31; animation: pulse .8s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    .speak-all-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #d8f3dc; border-radius: 10px; margin-bottom: 12px; }
+    .speak-all-bar span { font-size: 13px; color: #1b4332; flex: 1; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ====== PATCH GRAMMAR — add speak buttons to example blocks ======
+const _origRenderGrammar = renderGrammar;
+renderGrammar = function(level) {
+  _origRenderGrammar(level);
+  setTimeout(() => {
+    document.querySelectorAll('#grammar-content .example-block .de').forEach(el => {
+      if (el.querySelector('.spk-btn')) return;
+      const text = el.textContent.trim();
+      el.innerHTML = el.innerHTML + mkSpeak(text);
+    });
+    // Add speak to grammar table .de cells
+    document.querySelectorAll('#grammar-content .grammar-table td.de').forEach(el => {
+      if (el.querySelector('.spk-btn')) return;
+      const text = el.textContent.trim();
+      if (text.length > 1) el.innerHTML = el.innerHTML + mkSpeak(text, '11px');
+    });
+  }, 50);
+};
+
+// ====== PATCH VOCAB — add speak button + auto-speak on reveal ======
+const _origRenderVocabCards = renderVocabCards;
+renderVocabCards = function() {
+  const grid = document.getElementById('vocab-grid');
+  grid.innerHTML = '';
+  const filtered = vocabFilter === 'All' ? VOCAB_DATA : VOCAB_DATA.filter(v => v.cat === vocabFilter);
+  filtered.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'flash-card';
+    card.innerHTML = `
+      <div class="cat-badge">${item.cat}</div>
+      <div class="de spk-row">${item.de}${mkSpeak(item.de)}</div>
+      <div class="en">${item.en}</div>
+      <div class="fil">${item.fil}</div>`;
+    card.onclick = (e) => {
+      if (e.target.classList.contains('spk-btn')) return;
+      const wasRevealed = card.classList.contains('revealed');
+      card.classList.toggle('revealed');
+      if (!wasRevealed) speak(item.de, null);
+    };
+    grid.appendChild(card);
+  });
+};
+
+// ====== PATCH WRITING — add listen-all and per-sentence speak ======
+const _origRenderWriting = renderWriting;
+renderWriting = function(level) {
+  _origRenderWriting(level);
+  setTimeout(() => {
+    document.querySelectorAll('.model-answer').forEach((el, idx) => {
+      if (el.dataset.speakPatched) return;
+      el.dataset.speakPatched = '1';
+      const fullText = el.innerText.replace(/\n/g, ' ');
+      const bar = document.createElement('div');
+      bar.className = 'speak-all-bar';
+      bar.innerHTML = `<span>🔊 Listen to the full model answer</span><button class="listen-all-btn" onclick="speak('${fullText.replace(/'/g,"\\'")}',this)">▶ Listen</button>`;
+      el.parentNode.insertBefore(bar, el);
+      // Add speak button to each line
+      el.innerHTML = el.innerHTML.split('<br>').map(line => {
+        const t = line.replace(/<[^>]+>/g,'').trim();
+        return t.length > 3 ? `<span class="spk-sentence">${line}${mkSpeak(t,'11px')}</span>` : line;
+      }).join('<br>');
+    });
+    // Key phrases — speak each phrase
+    document.querySelectorAll('.phrase').forEach(el => {
+      if (el.querySelector('.spk-btn')) return;
+      const t = el.textContent.replace('...','').trim();
+      if (t.length > 1) el.innerHTML = el.innerHTML + mkSpeak(t, '10px');
+    });
+  }, 60);
+};
+
+// ====== PATCH SPEAKING PAGE — add speak to every sentence ======
+const _origBuildSpeaking = buildSpeaking;
+buildSpeaking = function() {
+  _origBuildSpeaking();
+  setTimeout(() => {
+    // Add listen-all button to every script-box
+    document.querySelectorAll('.script-box').forEach(el => {
+      if (el.dataset.speakPatched) return;
+      el.dataset.speakPatched = '1';
+      const fullText = el.innerText.replace(/\n/g,' ');
+      const bar = document.createElement('div');
+      bar.className = 'speak-all-bar';
+      bar.innerHTML = `<span>🔊 Listen to the full script at native speed</span><button class="listen-all-btn" onclick="speak('${fullText.replace(/'/g,"\\'")}',this)">▶ Listen</button>`;
+      el.parentNode.insertBefore(bar, el);
+    });
+    // Add speak to every .de sentence in example-blocks on speaking page
+    document.querySelectorAll('#page-speaking .example-block .de').forEach(el => {
+      if (el.querySelector('.spk-btn')) return;
+      el.innerHTML = el.innerHTML + mkSpeak(el.textContent.trim());
+    });
+    // Speaking table cells with German
+    document.querySelectorAll('#page-speaking table td:first-child').forEach(el => {
+      if (el.querySelector('.spk-btn')) return;
+      const t = el.textContent.trim();
+      if (t.length > 3 && /[A-ZÄÖÜ]/.test(t[0])) el.innerHTML = el.innerHTML + mkSpeak(t, '11px');
+    });
+  }, 60);
+};
+
+// ====== PATCH CHAT — speak bot messages + mic input ======
+
+// Override addMsg to auto-speak bot messages and add speaker icon
+const _origAddMsg = addMsg;
+addMsg = function(type, html) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  // Auto-speak bot messages (extract German — the strong tag)
+  if (type === 'bot') {
+    const strong = div.querySelector('strong');
+    if (strong) {
+      const text = strong.textContent.trim();
+      if (text && !text.includes('Wähle') && !text.includes('Choose')) {
+        // Add speak button next to the German text
+        const spkBtn = document.createElement('button');
+        spkBtn.className = 'chat-speak-btn';
+        spkBtn.textContent = '🔊';
+        spkBtn.title = 'Hear this sentence';
+        spkBtn.onclick = () => speak(text, spkBtn);
+        strong.appendChild(spkBtn);
+        // Auto-speak after short delay
+        setTimeout(() => speak(text, null), 400);
+      }
+    }
+  }
+  return div;
+};
+
+// Add mic button to chat input row
+function patchChatMic() {
+  const row = document.querySelector('.chat-input-row');
+  if (!row || row.querySelector('.mic-btn')) return;
+  const micBtn = document.createElement('button');
+  micBtn.className = 'mic-btn';
+  micBtn.title = 'Speak your answer in German';
+  micBtn.textContent = '🎤';
+  micBtn.onclick = () => toggleMic(micBtn);
+  row.insertBefore(micBtn, row.querySelector('.chat-send'));
+}
+
+let recognition = null;
+function toggleMic(btn) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    btn.textContent = '✗';
+    setTimeout(() => btn.textContent = '🎤', 1500);
+    addMsg('hint', '⚠️ Speech recognition is not supported in this browser. Try Chrome on desktop.');
+    return;
+  }
+  if (recognition) {
+    recognition.stop();
+    recognition = null;
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'de-DE';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  btn.classList.add('listening');
+  btn.textContent = '⏹';
+  addMsg('hint', '🎤 Listening... speak in German now!');
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('chat-input').value = transcript;
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+    recognition = null;
+    addMsg('feedback-good', `🎤 I heard: "${transcript}" — Gut gemacht!`);
+    setTimeout(() => sendChat(), 300);
+  };
+  recognition.onerror = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+    recognition = null;
+    addMsg('hint', '⚠️ Could not hear clearly. Try again or type your answer.');
+  };
+  recognition.onend = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎤';
+    recognition = null;
+  };
+  recognition.start();
+}
+
+// Patch buildChat to add mic after scenarios load
+const _origBuildChat = buildChat;
+buildChat = function() {
+  _origBuildChat();
+  setTimeout(patchChatMic, 100);
+};
+
+// Re-patch mic if startScenario is called
+const _origStartScenario = startScenario;
+startScenario = function(sc) {
+  _origStartScenario(sc);
+  setTimeout(patchChatMic, 100);
+};
+
+// ====== PATCH PRONUNCIATION PAGE — speak button already exists, enhance all ======
+// The pronunciation page already has playSound — override to use unified speak()
+playSound = function(word, cardId) {
+  const btn = document.querySelector('#' + cardId + ' .play-btn');
+  speak(word, btn);
+};
+
+// ====== ADD SPEAK TO DASHBOARD TODAY-TASKS hint sentences ======
+// Add a global floating speak-selection bar
+document.addEventListener('mouseup', () => {
+  const sel = window.getSelection();
+  if (!sel || sel.toString().trim().length < 2) return;
+  const text = sel.toString().trim();
+  // Only trigger on German-looking text (has umlaut or common German words)
+  if (/[äöüÄÖÜß]/.test(text) || /\b(ich|ist|die|der|das|und|nicht|bin|haben|sein)\b/i.test(text)) {
+    speak(text, null);
+  }
+});
+
+console.log('[Deutsch.PH] 🔊 Speak engine loaded on all pages.');
